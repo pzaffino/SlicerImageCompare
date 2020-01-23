@@ -174,33 +174,7 @@ class SyntheticCTEvaluationLogic(ScriptedLoadableModuleLogic):
 
   def __init__(self):
 
-    # Create table
-    self.tableNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTableNode")
-    self.table = self.tableNode.GetTable()
-    arrX = vtk.vtkFloatArray()
-    arrX.SetName("HU")
-    self.table.AddColumn(arrX)
-
-    arrY = vtk.vtkFloatArray()
-    arrY.SetName("DSC")
-    self.table.AddColumn(arrY)
-
-    # Create plot node
-    plotSeriesNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLPlotSeriesNode", "Bone threshold segmentation")
-    plotSeriesNode.SetAndObserveTableNodeID(self.tableNode.GetID())
-    plotSeriesNode.SetXColumnName("HU")
-    plotSeriesNode.SetYColumnName("DSC")
-    plotSeriesNode.SetPlotType(slicer.vtkMRMLPlotSeriesNode.PlotTypeScatter)
-    plotSeriesNode.SetMarkerStyle(slicer.vtkMRMLPlotSeriesNode.MarkerStyleSquare)
-    plotSeriesNode.SetUniqueColor()
-
-    # Create plot chart node
-    self.plotChartNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLPlotChartNode")
-    self.plotChartNode.AddAndObservePlotSeriesNodeID(plotSeriesNode.GetID())
-    self.plotChartNode.SetTitle('Bone threshold assessment')
-    self.plotChartNode.SetXAxisTitle('[HU]')
-    self.plotChartNode.SetYAxisTitle('DSC')
-    self.plotChartNode.LegendVisibilityOff()
+    self.hasTable = False
 
   def binarizeNumpyMask(self, img_np):
    img_np = img_np.astype(np.float32)
@@ -236,6 +210,39 @@ class SyntheticCTEvaluationLogic(ScriptedLoadableModuleLogic):
     img_difference[mask==0]=np.nan
     mae = np.nanmean(np.abs(img_difference).flatten())
     me = np.nanmean(img_difference.flatten())
+
+    # If the table does not exist, create it
+    if self.hasTable == False:
+
+      self.hasTable = True
+
+      # Create table
+      self.tableNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTableNode")
+      self.table = self.tableNode.GetTable()
+      arrX = vtk.vtkFloatArray()
+      arrX.SetName("HU")
+      self.table.AddColumn(arrX)
+
+      arrY = vtk.vtkFloatArray()
+      arrY.SetName("DSC")
+      self.table.AddColumn(arrY)
+
+      # Create plot node
+      plotSeriesNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLPlotSeriesNode", "Bone threshold segmentation")
+      plotSeriesNode.SetAndObserveTableNodeID(self.tableNode.GetID())
+      plotSeriesNode.SetXColumnName("HU")
+      plotSeriesNode.SetYColumnName("DSC")
+      plotSeriesNode.SetPlotType(slicer.vtkMRMLPlotSeriesNode.PlotTypeScatter)
+      plotSeriesNode.SetMarkerStyle(slicer.vtkMRMLPlotSeriesNode.MarkerStyleSquare)
+      plotSeriesNode.SetUniqueColor()
+
+      # Create plot chart node
+      self.plotChartNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLPlotChartNode")
+      self.plotChartNode.AddAndObservePlotSeriesNodeID(plotSeriesNode.GetID())
+      self.plotChartNode.SetTitle('Bone threshold assessment')
+      self.plotChartNode.SetXAxisTitle('[HU]')
+      self.plotChartNode.SetYAxisTitle('DSC')
+      self.plotChartNode.LegendVisibilityOff()
 
     # Fill table with DSC value for bone
     thrs = np.arange(100.0, 1100.0, 100.0)
